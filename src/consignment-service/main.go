@@ -1,15 +1,10 @@
 package main
 
 import (
-	"context"
 	pb "github.com/consingment-service/proto/consignment"
-	"google.golang.org/grpc"
+	"context"
 	"log"
-	"net"
-)
-
-const (
-	PORT = ":50051"
+	"github.com/asim/go-micro/v3"
 )
 
 //
@@ -17,6 +12,7 @@ const (
 //
 type IRepository interface {
 	Create(consignment *pb.Consignment) (*pb.Consignment, error) // 存放新货物
+	GetAll() []*pb.Consignment                                   // 获取仓库中所有的货物
 }
 
 //
@@ -42,42 +38,41 @@ type service struct {
 	repo Repository
 }
 
-
-func (s *service) GetAllConsignment(ctx context.Context, request *pb.Request) (*pb.Response, error) {
-	resp := pb.Response{Consignments: s.repo.GetAll()}
-	return &resp,nil
-}
-
-//
-// service 实现 consignment.pb.go 中的 ShippingServiceServer 接口
-// 使 service 作为 gRPC 的服务端
-//
-// 托运新的货物
-func (s *service) CreateConsignment(ctx context.Context, req *pb.Consignment) (*pb.Response, error) {
-	// 接收承运的货物
-	consignment, err := s.repo.Create(req)
+func (s *service) CreateConsignment(c context.Context, consignment *pb.Consignment, response *pb.Response) error {
+	log.Printf("service creat consignment.....")
+	consignment1, err := s.repo.Create(consignment)
+	log.Print( consignment )
 	if err != nil {
-		return nil, err
+		return err
 	}
-	resp := &pb.Response{Created: true, Consignment: consignment}
-	return resp, nil
+	response = &pb.Response{Created: true, Consignment: consignment1}
+	return nil
 }
+
+func (s *service) GetAllConsignment(c context.Context, request *pb.Request, response *pb.Response) error {
+	log.Printf("service getall.....")
+	allConsignments := s.repo.GetAll()
+	response = &pb.Response{Consignments: allConsignments}
+	return nil
+}
+
+
 
 func main() {
-	listener, err := net.Listen("tcp", PORT)
-	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
-	}
-	log.Printf("listen on: %s\n", PORT)
-
-	server := grpc.NewServer()
+	server := micro.NewService(
+		// 必须和 consignment.proto 中的 package 一致
+		micro.Name("go.micro.srv.consignment"),
+		micro.Version("latest"),
+	)
+    log.Printf("service init.....")
+	// 解析命令行参数
+	server.Init()
 	repo := Repository{}
-
-	// 向 rRPC 服务器注册微服务
-	// 此时会把我们自己实现的微服务 service 与协议中的 ShippingServiceServer 绑定
-	pb.RegisterShippingServiceServer(server, &service{repo})
-
-	if err := server.Serve(listener); err != nil {
+	pb.RegisterShippingServiceHandler(server.Server(), &service{repo})
+	log.Printf("service reg successfully.....")
+	if err := server.Run(); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
+
+	log.Printf("service closed .....")
 }
