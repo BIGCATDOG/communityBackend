@@ -40,19 +40,20 @@ type service struct {
 
 func (s *service) CreateConsignment(c context.Context, consignment *pb.Consignment, response *pb.Response) error {
 	log.Printf("service creat consignment.....")
-	consignment1, err := s.repo.Create(consignment)
+	consignment, err := s.repo.Create(consignment)
 	log.Print( consignment )
 	if err != nil {
 		return err
 	}
-	response = &pb.Response{Created: true, Consignment: consignment1}
+	response.Consignment = consignment
+	response.Created = true
 	return nil
 }
 
 func (s *service) GetAllConsignment(c context.Context, request *pb.Request, response *pb.Response) error {
 	log.Printf("service getall.....")
 	allConsignments := s.repo.GetAll()
-	response = &pb.Response{Consignments: allConsignments}
+	response.Consignments = allConsignments
 	return nil
 }
 

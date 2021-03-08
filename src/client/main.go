@@ -58,14 +58,14 @@ func main() {
 		log.Fatalf("create consignment error: %v", err)
 	}
 	log.Print(resp)
-	log.Printf("created: %t", resp.Created)
+	log.Printf("created: %t", resp.GetCreated())
 
     resp1,err:=client.GetAllConsignment(context.Background(),&pb.Request{})
 	log.Print(resp1)
 	if err != nil {
 		log.Fatalf("get All consignment error: %v", err)
 	}
-    log.Printf("All consignment count is %d",len(resp1.Consignments))
+    log.Printf("All consignment count is %d",len(resp1.GetConsignments()))
 	// 新货物是否托运成功
 
 }
