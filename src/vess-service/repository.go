@@ -22,7 +22,7 @@ type VesselRepository struct {
 func (repo *VesselRepository) FindAvailable(spec *pb.Specification) (*pb.Vessel, error) {
 	// 选择最近一条容量、载重都符合的货轮
 	var vessels[]*pb.Vessel
-	repo.Collection().Find(nil).All(vessels)
+	repo.Collection().Find(nil).All(&vessels)
 	for _, v := range vessels {
 		if v.Capacity >= spec.Capacity && v.MaxWeight >= spec.MaxWeight {
 			return v, nil
