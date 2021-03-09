@@ -2,6 +2,7 @@ package main
 
 import (
 	pb "github.com/consingment-service/proto/consignment"
+	vessPb "github.com/vess-service/proto/vess"
 	"context"
 	"log"
 	"github.com/asim/go-micro/v3"
@@ -36,16 +37,28 @@ func (repo *Repository) GetAll() []*pb.Consignment {
 //
 type service struct {
 	repo Repository
+	vessClient vessPb.VesselServiceClient
 }
 
 func (s *service) CreateConsignment(c context.Context, consignment *pb.Consignment, response *pb.Response) error {
 	log.Printf("service creat consignment.....")
-	consignment, err := s.repo.Create(consignment)
-	log.Print( consignment )
+	vReq := &vessPb.Specification{
+		Capacity:  int32(len(consignment.Containers)),
+		MaxWeight: consignment.Weight,
+	}
+	vResp,verr:=s.vessClient.FindAvailable(c,vReq)
+	if verr!=nil{
+		return verr
+	}
+	// 货物被承运
+	log.Printf("found vessel: %s\n", vResp.Vessel.Name)
+	consignment.VesselId = vResp.Vessel.Id
+	respConsignment, err := s.repo.Create(consignment)
+	log.Print( respConsignment )
 	if err != nil {
 		return err
 	}
-	response.Consignment = consignment
+	response.Consignment = respConsignment
 	response.Created = true
 	return nil
 }
@@ -69,7 +82,8 @@ func main() {
 	// 解析命令行参数
 	server.Init()
 	repo := Repository{}
-	pb.RegisterShippingServiceHandler(server.Server(), &service{repo})
+	vessCient := vessPb.NewVesselServiceClient("go.micro.srv.vessel",server.Client())
+	pb.RegisterShippingServiceHandler(server.Server(), &service{repo: repo,vessClient: vessCient})
 	log.Printf("service reg successfully.....")
 	if err := server.Run(); err != nil {
 		log.Fatalf("failed to serve: %v", err)
