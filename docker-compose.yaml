@@ -33,11 +33,22 @@ services:
     environment:
       MICRO_ADDRESS: ":50051"
       MICRO_REGISTRY: "mdns"
-
+      DB_HOST: "database"
+      DB_USER: "admin"
+      DB_PASSWORD: "password"
+      DB_NAME: "postgres"
+  user-client:
+    build: ./src/user-client
+    environment:
+      MICRO_REGISTRY: "mdns"
   database:
-      image: postgres
-      ports:
-        - 5432:5432
+    image: postgres:alpine
+    hostname: database
+    environment:
+      POSTGRES_PASSWORD: "password"
+      POSTGRES_USER: "admin"
+    ports:
+      - 5432:5432
   datastore:
     image: mongo
     ports:
