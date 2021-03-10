@@ -1,6 +1,6 @@
 package main
 
-import pb "user-service/proto/user"
+import pb "github.com/user-service/proto/user"
 import "github.com/jinzhu/gorm"
 
 

@@ -1,12 +1,15 @@
 package main
 
-import pb "user-service/proto/user"
+import (
+	"context"
+	pb "github.com/user-service/proto/user"
+)
 
 type Handler struct {
 	repo Repository
 }
 
-func (h *Handler) Create(c interface{}, user *pb.User, response *pb.Response) error {
+func (h *Handler) Create(c context.Context, user *pb.User, response *pb.Response) error {
      err:=h.repo.Create(user)
      if err!=nil{
      	return err
@@ -15,7 +18,7 @@ func (h *Handler) Create(c interface{}, user *pb.User, response *pb.Response) er
 	 return nil
 }
 
-func (h *Handler) Get(c interface{}, user *pb.User, response *pb.Response) error {
+func (h *Handler) Get(c context.Context, user *pb.User, response *pb.Response) error {
       u,err:=h.repo.Get(user.Id)
       if err!=nil{
       	return err
@@ -24,7 +27,7 @@ func (h *Handler) Get(c interface{}, user *pb.User, response *pb.Response) error
 	  return nil
 }
 
-func (h *Handler) GetAll(c interface{}, request *pb.Request, response *pb.Response) error {
+func (h *Handler) GetAll(c context.Context, request *pb.Request, response *pb.Response) error {
       users,err := h.repo.GetAll()
       if err!=nil{
       	return err
@@ -33,7 +36,7 @@ func (h *Handler) GetAll(c interface{}, request *pb.Request, response *pb.Respon
 	  return nil
 }
 
-func (h *Handler) Auth(c interface{}, user *pb.User, token *pb.Token) error {
+func (h *Handler) Auth(c context.Context, user *pb.User, token *pb.Token) error {
 	_, err := h.repo.GetByEmailAndPassword(user)
 	if err != nil {
 		return err
@@ -42,7 +45,7 @@ func (h *Handler) Auth(c interface{}, user *pb.User, token *pb.Token) error {
 	return nil
 }
 
-func (h *Handler) ValidateToken(c interface{}, token *pb.Token, token2 *pb.Token) error {
+func (h *Handler) ValidateToken(c context.Context, token *pb.Token, token2 *pb.Token) error {
      return nil
 }
 

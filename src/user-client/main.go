@@ -1,8 +1,14 @@
 package main
 
 import (
+	"context"
 	"github.com/asim/go-micro/v3"
+	 microclient "github.com/asim/go-micro/v3/client"
 	"github.com/asim/go-micro/v3/cmd"
+	"github.com/micro/cli/v2"
+	"log"
+	"os"
+
 	pb "github.com/user-service/proto/user"
 )
 
@@ -21,19 +27,19 @@ func main() {
 	// 设置命令行参数
 	service := micro.NewService(
 		micro.Flags(
-			cli.StringFlag{
+			&cli.StringFlag{
 				Name:  "name",
 				Usage: "You full name",
 			},
-			cli.StringFlag{
+			&cli.StringFlag{
 				Name:  "email",
 				Usage: "Your email",
 			},
-			cli.StringFlag{
+			&cli.StringFlag{
 				Name:  "password",
 				Usage: "Your password",
 			},
-			cli.StringFlag{
+			&cli.StringFlag{
 				Name: "company",
 				Usage: "Your company",
 			},
@@ -41,7 +47,7 @@ func main() {
 	)
 
 	service.Init(
-		micro.Action(func(c *cli.Context) {
+		micro.Action(func(c *cli.Context) error {
 			name := c.String("name")
 			email := c.String("email")
 			password := c.String("password")
@@ -67,6 +73,7 @@ func main() {
 			}
 
 			os.Exit(0)
+			return nil
 		}),
 	)
 
