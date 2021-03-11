@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	pb "github.com/user-service/proto/user"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type Handler struct {
@@ -10,8 +11,13 @@ type Handler struct {
 }
 
 func (h *Handler) Create(c context.Context, user *pb.User, response *pb.Response) error {
-     err:=h.repo.Create(user)
-     if err!=nil{
+	 encryPassword,err:=bcrypt.GenerateFromPassword([]byte(user.Password),bcrypt.DefaultCost)
+	 if err!=nil{
+	 	return err
+	 }
+	 user.Password = string(encryPassword)
+     repoErr:=h.repo.Create(user)
+     if repoErr!=nil{
      	return err
 	 }
 	 response.User=user
@@ -37,9 +43,13 @@ func (h *Handler) GetAll(c context.Context, request *pb.Request, response *pb.Re
 }
 
 func (h *Handler) Auth(c context.Context, user *pb.User, token *pb.Token) error {
-	_, err := h.repo.GetByEmailAndPassword(user)
+	userEncode, err := h.repo.GetByEmailAndPassword(user)
 	if err != nil {
 		return err
+	}
+	compareErr:=bcrypt.CompareHashAndPassword([]byte(userEncode.Password),[]byte(user.Password))
+	if compareErr!=nil{
+		return compareErr
 	}
 	token.Token = "`x_2nam"
 	return nil
