@@ -2,12 +2,14 @@ package main
 
 import (
 	"context"
+	"fmt"
 	pb "github.com/user-service/proto/user"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type Handler struct {
 	repo Repository
+	tokenService *TokenService
 }
 
 func (h *Handler) Create(c context.Context, user *pb.User, response *pb.Response) error {
@@ -43,19 +45,33 @@ func (h *Handler) GetAll(c context.Context, request *pb.Request, response *pb.Re
 }
 
 func (h *Handler) Auth(c context.Context, user *pb.User, token *pb.Token) error {
+	userCopy := *user
 	userEncode, err := h.repo.GetByEmailAndPassword(user)
 	if err != nil {
 		return err
 	}
-	compareErr:=bcrypt.CompareHashAndPassword([]byte(userEncode.Password),[]byte(user.Password))
+	fmt.Println(userEncode)
+	fmt.Println(user)
+	compareErr:=bcrypt.CompareHashAndPassword([]byte(userEncode.Password),[]byte(userCopy.Password))
 	if compareErr!=nil{
 		return compareErr
 	}
-	token.Token = "`x_2nam"
+	fmt.Println("verify password")
+	tokenRes,tokenErr:=h.tokenService.Encode(userEncode)
+	if tokenErr!=nil{
+		return tokenErr
+	}
+	token.Token = tokenRes
 	return nil
 }
 
 func (h *Handler) ValidateToken(c context.Context, token *pb.Token, token2 *pb.Token) error {
-     return nil
+   claims,err:=  h.tokenService.Decode(token.Token)
+   if err !=nil || claims.Valid()!=nil {
+   	 token2.Valid = false
+   	 return err
+   }
+   token2.Valid=true
+   return nil
 }
 
