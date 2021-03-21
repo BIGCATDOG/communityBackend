@@ -1,4 +1,4 @@
-FROM golang:alpine
+FROM golang:alpine as builder
 ENV GOOS=linux \
     GO111MODULE=on\
     GOPATH=""\
@@ -14,7 +14,6 @@ COPY  ./src/vess-service /vess-service
 WORKDIR /consignment-service
 RUN  go build -o consignment-service
 WORKDIR ..
-RUN mkdir /app
-RUN cp /consignment-service/consignment-service  /app/consignment-service
-WORKDIR /app
-CMD ["./consignment-service"]
+FROM scratch
+COPY --from=builder /consignment-service/consignment-service /consignment-service
+CMD ["/consignment-service"]
